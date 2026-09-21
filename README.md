@@ -1,6 +1,6 @@
 # Vault Agent — Team 22 (Route A, Project 22 — Knowledgebase)
 
-EAG V3 capstone. Irene Mary Mathew, Nizamudheen T I.
+EAG V3 capstone. Nizamudheen T I, Naren V, Irene Mary Mathew.
 
 ## Setup
 
@@ -27,7 +27,7 @@ pytest tests/ -v
 - `src/client.py` — auth + MCP JSON-RPC client (harness infrastructure).
 - `src/agent.py` — the Vault Agent's answering loop and charter enforcement.
 - `tests/verifiers.py` — checks against agent output/DB state, not prose (harness infrastructure).
-- `tests/test_*.py` — the graded, hand-written tests. **Written by Irene and Nizam only** — see each file's docstring.
+- `tests/test_*.py` — the graded, hand-written tests. See each file's docstring.
 - `SKILL.md` — the agent's charter.
 - `DESIGN.md` — what we taught it, what's still wrong, what's next.
 

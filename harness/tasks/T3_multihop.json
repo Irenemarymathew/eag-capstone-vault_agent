@@ -1,0 +1,10 @@
+{
+  "id": "T3_multihop",
+  "kind": "answer",
+  "question": "What do we know about Bharat EV?",
+  "maps_to": "Charter claim: 'synthesizing scattered mentions of one entity into one answer' — this checks the agent pulls together more than one note rather than stopping at the first match.",
+  "notes": "Verified manually on 2026-09-22 after the pagination fix (KBNote.list defaults to 20 items; vault has 100, and Bharat EV notes were past the first page).",
+  "expect_refused": false,
+  "min_sources": 2,
+  "must_cite_real_notes": true
+}

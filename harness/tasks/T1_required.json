@@ -1,0 +1,10 @@
+{
+  "id": "T1_required",
+  "kind": "answer",
+  "question": "How do we handle a customer rejection, and what do we already know about Bharat EV?",
+  "maps_to": "Section 8's one required request for the Knowledgebase seat: 'How do we handle a customer rejection, and what do we already know about this customer?'",
+  "notes": "The brief's question names no specific customer — grading will likely substitute a real one. 'Bharat EV' is used here because it's already confirmed (by manual testing) to exist in the vault with multiple notes. Before final submission, re-run this task once with whatever customer name the grader actually uses, by editing this file's 'question' field.",
+  "expect_refused": false,
+  "min_sources": 2,
+  "must_cite_real_notes": true
+}

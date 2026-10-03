@@ -4,4 +4,6 @@ __pycache__/
 .pytest_cache/
 venv/
 .venv/
-runs/
+# NOTE: harness/runs/ is intentionally NOT ignored — those files are the
+# evidence that the harness actually ran against live data (Section 8,
+# "every run written to disk before anything is scored"). Commit them.

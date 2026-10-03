@@ -1,0 +1,10 @@
+{
+  "id": "T2_refusal",
+  "kind": "answer",
+  "question": "What's our marketing budget for next year?",
+  "maps_to": "Section 8 grading item: 'At least one task where the correct answer is refusal.' The vault has no notes on marketing budget, so the agent must say so rather than guess.",
+  "notes": "Verified manually on 2026-09-22: the agent correctly refuses this after the stopword/corpus-frequency fix (see DESIGN.md). The verifier below independently re-checks the vault for anything matching 'marketing' or 'budget' so this isn't just trusting the agent's own refused flag.",
+  "expect_refused": true,
+  "min_sources": 0,
+  "must_cite_real_notes": true
+}

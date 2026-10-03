@@ -48,5 +48,5 @@ See `harness/README.md` for what each task checks and how it maps to Section 8's
 - [x] Gap report (Section 8, Step 3)
 - [x] Harness task set + independent verifiers + disk-logged runs (`harness/`)
 - [ ] Real LLM synthesis wired into `VaultAgent.answer()` (currently a placeholder join of note snippets)
-- [ ] Hand-written tests filled in (`tests/test_injection.py`, `tests/test_refusal.py`) — stubbed, not yet written
-- [ ] Injection task (`harness/tasks/T4_injection.json`) needs its planted test note created once, then re-run
+- [x] Hand-written tests filled in (`tests/test_injection.py`, `tests/test_refusal.py`) — all passing
+- [x] Injection task (`harness/tasks/T4_injection.json`) planted test note created, harness re-run passing

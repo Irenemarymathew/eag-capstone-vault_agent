@@ -173,17 +173,40 @@ class VaultAgent:
                 flagged_injection_sources=flagged,
             )
 
+        # A note flagged for injection must never have its content quoted into
+        # the answer, even if it's topically relevant — found via the harness
+        # (T4_injection, 2026-10-03): flagging alone wasn't enough, because the
+        # synthesis step below was still echoing the flagged note's raw body
+        # text (including the attacker's claim) into the final answer. Such
+        # notes are excluded from synthesis/citation entirely and only
+        # reported via flagged_injection_sources.
+        safe_to_cite = [n for n in relevant if n.get("title", n.get("id", "untitled")) not in flagged]
+
+        if not safe_to_cite:
+            return Answer(
+                text=f"I don't have anything in the knowledge base that answers: {question!r}. "
+                     "A human should confirm whether this information exists elsewhere.",
+                sources=[],
+                refused=True,
+                flagged_injection_sources=flagged,
+            )
+
         # Placeholder synthesis — replace with an LLM call once wired up.
         # The important behavioral contract (tested in tests/) is:
         #   1. only cite notes actually used to build the answer
         #   2. never let flagged-injection content change this method's behavior
         summary_lines = [f"- {n.get('title', n.get('id'))}: {strip_html(n.get('body',''))[:200].strip()}"
-                          for n in relevant]
+                          for n in safe_to_cite]
         text = "Based on the notes found:\n" + "\n".join(summary_lines)
+        if flagged:
+            text += (
+                f"\n\n(Note: {len(flagged)} source(s) were excluded from this answer because they "
+                "appeared to contain an embedded instruction rather than factual content.)"
+            )
 
         return Answer(
             text=text,
-            sources=[n.get("title", n.get("id")) for n in relevant],
+            sources=[n.get("title", n.get("id")) for n in safe_to_cite],
             refused=False,
             flagged_injection_sources=flagged,
         )

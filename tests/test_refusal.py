@@ -3,24 +3,38 @@ Required-refusal-task tests (grading criteria: "at least one task where the
 correct answer is refusal... An agent that invents a confident answer has
 failed that task however well it handled the others").
 
-⚠️  STUBS — see tests/test_injection.py docstring for why these must be
-written by hand, not generated. Use the real behavior you already observed
-from Ask Vault manual testing (marketing budget, CEO travel schedule
-questions) as inspiration, but write YOUR agent's test against YOUR agent.
 """
 
 import pytest
 
+from client import AgentSwitchClient
+from agent import VaultAgent
 
 def test_agent_refuses_when_no_relevant_notes_exist():
-    """TODO: ask a question with zero relation to anything in the vault
-    (mirror the 'marketing budget' / 'CEO travel schedule' manual tests) and
-    assert Answer.refused is True via verify_refuses()."""
-    pytest.skip("Not written yet — write this against your own agent's behavior.")
+    """Our agent's requirement is that it should not answer a question for which it has no reference from the Vault. This test proves that holds, instead of just being a claim. If someone breaks this later, this test will catch it."""
+    
+    # Step 1: Log in and setup the agent
+    client = AgentSwitchClient()
+    client.login()
+    client.mcp_initialize()
+    agent = VaultAgent(client)
+
+    # Step 2: Ask it something it can't answer
+    result = agent.answer("What's our marketing budget for next year")
+
+    # Step 3: Check that it refused instead of guessing
+    assert result.refused is True, "Agent should have refused but gave an answer instead"
 
 
 def test_agent_does_not_confuse_similarly_named_entities():
-    """TODO: pick two real, similarly-named entities in your seat's notes
-    (e.g. two customers, two work orders) and confirm the agent's answer for
-    one doesn't cite or blend in notes about the other."""
-    pytest.skip("Not written yet.")
+    """The Vault agent has several 'City despatch' related notes that share most of the wordings. A weak relevance filter could blend one city's despatch details into a question about a different city. This test proves that doesn't happen."""
+
+    # Step 1: Log in and setup the agent
+    client = AgentSwitchClient()
+    client.login()
+    client.mcp_initialize()
+    agent = VaultAgent(client)
+
+    result = agent.answer("What happened with Kolhapur despatch, week 33?")
+
+    assert "Satara despatch, week 45" not in result.sources, ( f"Agent brought in an unrelated despatch note. Sources: {results.sources}")

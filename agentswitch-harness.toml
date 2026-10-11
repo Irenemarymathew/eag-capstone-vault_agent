@@ -1,0 +1,15 @@
+# Read by the AgentSwitch server when the team clicks "Our harness -> Submit for a run".
+# The runner checks out this repo, runs `install` (internet allowed), then runs `run`
+# once per instance below against a throwaway copy (no internet, writes discarded).
+# Credentials come from the runner's environment (AGENTSWITCH_BASE_URL / AGENTSWITCH_TOKEN),
+# never from .env — see src/client.py.
+
+install = "pip install -r requirements.txt"
+run = "python harness/run_tasks.py"
+results = "results.json"
+
+# Suryodaya only: the tasks' questions and the planted injection note are written
+# against Suryodaya's vault. Keystone's notes are different data.
+instances = ["suryodaya"]
+
+timeout_minutes = 10

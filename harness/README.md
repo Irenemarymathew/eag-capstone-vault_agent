@@ -31,6 +31,27 @@ export AS_PASSWORD=...        # from the team channel, never commit this
 python harness/run_tasks.py
 ```
 
+## Official server run ("Our harness" → Submit for a run)
+
+The platform can run this harness itself, on the exact commit of the saved branch,
+against a fresh copy of the instance (writes are thrown away, no internet during the
+run). What it needs from this repo:
+
+- `agentswitch-harness.toml` (repo root) — install command, run command
+  (`python harness/run_tasks.py`), results path, and which instances to run
+  (`suryodaya` only: the task questions and planted note are written for its vault).
+- **No credentials in the repo.** The runner supplies `AGENTSWITCH_BASE_URL` and
+  `AGENTSWITCH_TOKEN`; `src/client.py` uses them directly and skips login.
+- `results.json`, written by `run_tasks.py` *after* the raw run is logged to
+  `harness/runs/`: one entry per task (`id`, `title`, `passed`, `score`, `evidence`).
+  Tasks that could not run (e.g. T4 if its planted note can't be created) are left
+  out and counted as "skipped" in the summary line, not reported as passes.
+- On the throwaway copy, if T4's planted note is missing, the harness creates it with
+  `KBNote.create`. That only happens when the runner sets `AGENTSWITCH_INSTANCE`, so a
+  local run never writes to the shared instance.
+
+One official run per team every 3 days — check this works locally first.
+
 ## Current tasks
 
 | id | kind | what it checks |

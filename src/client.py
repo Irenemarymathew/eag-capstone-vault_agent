@@ -7,7 +7,15 @@ Usage:
     client.login()
     tools = client.list_tools()
     result = client.call_tool("KBNote.list", {})   # returns parsed {"data": [...]} dict
+
+Two ways to authenticate:
+  * Local: set AS_URL / AS_EMAIL / AS_PASSWORD; login() exchanges them for a token.
+  * Official harness run on the AgentSwitch server: the runner provides
+    AGENTSWITCH_BASE_URL and AGENTSWITCH_TOKEN (no password). If a token is
+    already present, login() is a no-op and the token is used as-is.
 """
+
+from __future__ import annotations
 
 import json
 import os
@@ -23,23 +31,35 @@ class AgentSwitchError(RuntimeError):
 
 @dataclass
 class AgentSwitchClient:
-    base_url: str = field(default_factory=lambda: os.environ.get("AS_URL", ""))
+    base_url: str = field(
+        default_factory=lambda: os.environ.get("AS_URL") or os.environ.get("AGENTSWITCH_BASE_URL", "")
+    )
     email: str = field(default_factory=lambda: os.environ.get("AS_EMAIL", ""))
     password: str = field(default_factory=lambda: os.environ.get("AS_PASSWORD", ""))
-    token: str | None = None
+    token: str | None = field(default_factory=lambda: os.environ.get("AGENTSWITCH_TOKEN") or None)
     session: requests.Session = field(default_factory=requests.Session)
     _rpc_id: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
         if not self.base_url:
             raise AgentSwitchError(
-                "AS_URL is not set. Export AS_URL to the Suryodaya or Keystone base URL."
+                "AS_URL (or AGENTSWITCH_BASE_URL) is not set. Export it to the Suryodaya or "
+                "Keystone base URL."
             )
+        self.base_url = self.base_url.rstrip("/")
+        if self.token:
+            self.session.headers["Authorization"] = f"Bearer {self.token}"
 
     # ---------- auth ----------
 
     def login(self) -> str:
-        """POST /api/auth/login, store the bearer token, return it."""
+        """POST /api/auth/login, store the bearer token, return it.
+
+        If a token was already supplied (AGENTSWITCH_TOKEN, set by the official
+        harness runner), there is nothing to log in to: return it unchanged.
+        """
+        if self.token:
+            return self.token
         if not self.email or not self.password:
             raise AgentSwitchError("AS_EMAIL / AS_PASSWORD are not set.")
         resp = self.session.post(
@@ -106,7 +126,7 @@ class AgentSwitchClient:
         payload = {"jsonrpc": "2.0", "id": self._rpc_id, "method": method, "params": params}
         resp = self.session.post(f"{self.base_url}/api/mcp", json=payload, timeout=60)
         if resp.status_code == 401:
-            raise AgentSwitchError("401 Unauthorized — token missing or expired, call login() again.")
+            raise AgentSwitchError("401 Unauthorized — token missing, invalid or expired.")
         if resp.status_code != 200:
             raise AgentSwitchError(f"MCP transport error: {resp.status_code} {resp.text}")
         body = resp.json()

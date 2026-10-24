@@ -11,17 +11,18 @@
 
 ## What it still gets wrong / is unfinished
 
-- `VaultAgent.answer()` currently does placeholder synthesis (a join of note snippets), not real LLM-backed reasoning — needs to be wired to an actual model call for genuine multi-hop synthesis (e.g. explaining the Bharat EV → battery tray → yield/cost chain in prose, not just concatenated excerpts).
-- The relevance filter is still pure keyword overlap (now with stopword + corpus-frequency filtering) — it will miss genuinely relevant notes that use different wording (paraphrase, synonyms) and has only been validated against two manual test cases so far. Needs broader testing across more of the seat's real questions before we trust it.
-- Injection-detection patterns are a fixed regex list — not yet tested against a real embedded-instruction note planted in the live vault (see `tests/test_injection.py` stubs, still unwritten).
-- The corpus-adaptive stopword threshold (12%) was tuned against one failure case (the marketing-budget query) — it's a reasonable first cut but not yet stress-tested against other generic-word false positives.
+- Synthesis is now LLM-backed (the platform's OpenAI-compatible model, with a fallback to plain quoting if it is unavailable), and the quoted notes are shown as "Evidence:" beneath the answer. The quality of the prose has only been checked through the harness tasks, not on a wider set of real questions. Multi-hop explanations like the Bharat EV → battery tray → yield/cost chain have not been judged for quality.
+- The relevance filter is still pure keyword overlap (now with stopword + corpus-frequency filtering) — it will miss genuinely relevant notes that use different wording (paraphrase, synonyms). It has been validated against the harness tasks (T1–T8) and a few manual cases, but needs broader testing across more of the seat's real questions before we trust it.
+- Injection detection is a fixed regex list. It has been tested against one planted note in the live vault (harness task T4 and `tests/test_injection.py`), but not against other phrasings or encodings of an embedded instruction.
+- The corpus-adaptive stopword threshold (12%) was tuned against one failure case (the marketing-budget query). It has since held up on the three refusal tasks (T5–T7), but it has not been stress-tested against other generic-word false positives.
+- Refusals are not logged anywhere as knowledge gaps (see `GAP_REPORT.md`, gap 2). The agent refuses correctly, but nobody is told what was missing.
 
 ## What we'd want next
 
-- Real multi-hop synthesis (the Bharat EV case) backed by an actual LLM call over the filtered note set.
-- A second relevance signal beyond keyword overlap (e.g. embeddings) once we've established the keyword baseline works.
-- Write the hand-written injection and refusal tests (currently stubbed), using a real note we plant in Suryodaya with an embedded instruction.
-- Gap report comparing this against a real AI-native knowledge base product (Glean / Notion AI / Guru — TBD).
+- A second relevance signal beyond keyword overlap (e.g. embeddings) now that the keyword baseline is established.
+- Log every refusal as a knowledge gap, so a human can see what the vault is missing.
+- More hand-written tests beyond the current four, and more harness tasks (multi-entity and paraphrased questions).
+- Check the quality of the LLM answers on a wider set of real questions, not only the harness tasks.
 
 ## Confirmed platform details (corrects earlier assumptions)
 

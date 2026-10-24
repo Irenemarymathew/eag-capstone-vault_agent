@@ -1,0 +1,9 @@
+{
+  "id": "T5_refusal_offtopic_cafeteria",
+  "kind": "answer",
+  "question": "What samosa is on the cafeteria menu?",
+  "maps_to": "Section 8 required refusal case: a question with nothing to do with the vault. Wording uses only distinctive words on purpose, so the independent verifier's looser word-overlap check can't be fooled by common words.",
+  "expect_refused": true,
+  "min_sources": 0,
+  "must_cite_real_notes": true
+}

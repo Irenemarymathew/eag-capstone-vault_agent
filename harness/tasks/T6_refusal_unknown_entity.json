@@ -1,0 +1,9 @@
+{
+  "id": "T6_refusal_unknown_entity",
+  "kind": "answer",
+  "question": "What do we know about Zorblatt?",
+  "maps_to": "Refusal for an entity that does not exist (invented name). The agent must not answer from notes about other customers just because they are customer-shaped.",
+  "expect_refused": true,
+  "min_sources": 0,
+  "must_cite_real_notes": true
+}

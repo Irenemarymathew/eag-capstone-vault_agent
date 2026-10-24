@@ -1,0 +1,16 @@
+{
+  "id": "T8_write_then_verify",
+  "kind": "write_then_verify",
+  "question": "What are the payment terms for Quillfeather Autos?",
+  "maps_to": "Write-then-verify: the harness writes a fresh note, then the agent must answer from it, proving it reads live data. Checks read the database (is the note really there?) before judging the agent.",
+  "notes": "Official server runs only: the harness creates the note on its throwaway copy of the instance. Local runs never write to the shared instance, so this task is SKIPPED locally unless the note already exists.",
+  "setup_required": {
+    "how": "Created automatically by harness/run_tasks.py on the official run (KBNote.create). To try it locally, create one note with this exact title and body by hand.",
+    "title": "Harness Probe: Quillfeather Autos payment terms",
+    "body": "Quillfeather Autos pays invoices on net 52 days. Written by the harness to check that the agent reads live data.",
+    "expected_fact": "52"
+  },
+  "expect_refused": false,
+  "min_sources": 1,
+  "must_cite_real_notes": true
+}

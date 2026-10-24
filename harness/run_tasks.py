@@ -49,9 +49,12 @@ from agent import VaultAgent  # noqa: E402
 from client import AgentSwitchClient, AgentSwitchError  # noqa: E402
 from ground_truth_checks import (  # noqa: E402
     check_answer_has_support,
+    check_fact_in_answer,
     check_injection_flagged,
     check_injection_not_obeyed,
+    check_note_in_db_has_fact,
     check_refusal_is_justified,
+    check_source_cited,
     check_sources_are_real,
     find_note_by_title,
 )
@@ -69,8 +72,20 @@ def load_tasks() -> list[dict]:
     return tasks
 
 
-def try_plant_note(client: AgentSwitchClient, setup: dict) -> str | None:
-    """Create the injection task's planted note on a throwaway instance copy.
+# Task kinds whose task file has a "setup_required" note (title + body) that must
+# exist in the vault before the agent is asked anything.
+SETUP_KINDS = ("injection", "write_then_verify")
+
+
+def pick_vault_id(all_notes: list[dict]) -> str | None:
+    """KBNote.create requires a vault_id. Use the one most existing notes live in."""
+    ids = [n["vault_id"] for n in all_notes if isinstance(n.get("vault_id"), str) and n["vault_id"]]
+    return max(set(ids), key=ids.count) if ids else None
+
+
+def try_create_note(client: AgentSwitchClient, title: str, body: str,
+                    all_notes: list[dict]) -> str | None:
+    """Create a setup note on a throwaway instance copy (official run only).
 
     Returns None on success, or a short reason string if it could not be created
     (the task is then reported as skipped rather than silently passing).
@@ -80,10 +95,16 @@ def try_plant_note(client: AgentSwitchClient, setup: dict) -> str | None:
         if tool is None:
             return "KBNote.create is not available to this seat"
         required = (tool.get("inputSchema") or {}).get("required") or []
-        extra = [name for name in required if name not in ("title", "body")]
+        args = {"title": title, "body": body}
+        if "vault_id" in required:
+            vault_id = pick_vault_id(all_notes)
+            if vault_id is None:
+                return "KBNote.create needs a vault_id but no existing note shows one"
+            args["vault_id"] = vault_id
+        extra = [name for name in required if name not in args]
         if extra:
-            return f"KBNote.create also requires {extra}; add them in try_plant_note()"
-        client.call_tool("KBNote.create", {"title": setup["title"], "body": setup["body"]})
+            return f"KBNote.create also requires {extra}; add them in try_create_note()"
+        client.call_tool("KBNote.create", args)
         return None
     except (AgentSwitchError, OSError) as exc:
         return f"KBNote.create failed: {exc}"
@@ -132,15 +153,16 @@ def write_results_json(entries: list[dict], skipped: int = 0) -> None:
 def run_task(task: dict, agent: VaultAgent, all_notes: list[dict]) -> dict:
     result: dict = {"id": task["id"], "question": task["question"], "checks": []}
 
-    # Injection tasks need a planted note; skip cleanly if it isn't there yet.
-    if task["kind"] == "injection":
+    # Injection / write-then-verify tasks need a setup note; skip cleanly if it isn't there.
+    if task["kind"] in SETUP_KINDS:
         setup = task["setup_required"]
         planted = find_note_by_title(all_notes, setup["title"])
         if planted is None:
             result["status"] = "SKIPPED"
             result["reason"] = (
-                f"Planted note {setup['title']!r} not found in the vault. "
-                f"Create it first (see the task file's setup_required.body), then re-run."
+                f"Setup note {setup['title']!r} not found in the vault. "
+                f"The official server run creates it on its throwaway copy; locally, create it "
+                f"by hand (see the task file's setup_required.body), then re-run."
             )
             return result
 
@@ -184,6 +206,17 @@ def run_task(task: dict, agent: VaultAgent, all_notes: list[dict]) -> dict:
         ok, detail = check_injection_flagged(answer.flagged_injection_sources, setup["title"])
         checks.append({"name": "injection_flagged", "passed": ok, "detail": detail})
 
+    if task["kind"] == "write_then_verify":
+        # The harness wrote the note; these checks read the database to confirm it landed,
+        # then confirm the agent's answer actually reflects that fresh data.
+        setup = task["setup_required"]
+        ok, detail = check_note_in_db_has_fact(all_notes, setup["title"], setup["expected_fact"])
+        checks.append({"name": "written_note_in_db", "passed": ok, "detail": detail})
+        ok, detail = check_source_cited(answer.sources, setup["title"])
+        checks.append({"name": "new_note_cited", "passed": ok, "detail": detail})
+        ok, detail = check_fact_in_answer(answer.text, setup["expected_fact"])
+        checks.append({"name": "answer_reflects_new_fact", "passed": ok, "detail": detail})
+
     result["checks"] = checks
     result["status"] = "PASS" if all(c["passed"] for c in checks) else "FAIL"
     return result
@@ -215,18 +248,28 @@ def main() -> None:
         }])
         return
 
-    # Throwaway-copy setup: plant T4's note if it is missing (official run only).
+    # Throwaway-copy setup: create each setup note that is missing (official run only).
     plant_failure: dict[str, str] = {}
+    created_any = False
     for task in tasks:
-        if task["kind"] != "injection" or not OFFICIAL_RUN:
+        if task["kind"] not in SETUP_KINDS:
             continue
         setup = task["setup_required"]
-        if find_note_by_title(all_notes, setup["title"]) is None:
-            reason = try_plant_note(client, setup)
+        if find_note_by_title(all_notes, setup["title"]) is not None:
+            print(f"Setup for {task['id']}: note already present.")
+        elif not OFFICIAL_RUN:
+            print(f"Setup for {task['id']}: note missing; local runs never write, so it will be skipped.")
+        else:
+            reason = try_create_note(client, setup["title"], setup["body"], all_notes)
             if reason:
                 plant_failure[task["id"]] = reason
+                print(f"Setup for {task['id']}: could not create note ({reason}).")
             else:
-                all_notes = agent.fetch_all_notes()  # re-read so verifiers see the new note
+                created_any = True
+                print(f"Setup for {task['id']}: created note via KBNote.create.")
+    if created_any:
+        all_notes = agent.fetch_all_notes()  # re-read so verifiers see the new notes
+    print()
 
     results = []
     for task in tasks:

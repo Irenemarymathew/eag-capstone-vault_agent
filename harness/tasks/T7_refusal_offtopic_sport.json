@@ -1,0 +1,9 @@
+{
+  "id": "T7_refusal_offtopic_sport",
+  "kind": "answer",
+  "question": "Who won the cricket trophy?",
+  "maps_to": "Refusal for general-knowledge questions that a knowledge-base agent must not answer from its own head (charter: never invents an answer).",
+  "expect_refused": true,
+  "min_sources": 0,
+  "must_cite_real_notes": true
+}

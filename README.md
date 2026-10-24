@@ -49,5 +49,5 @@ See `harness/README.md` for what each task checks and how it maps to Section 8's
 - [x] Harness task set + independent verifiers + disk-logged runs (`harness/`)
 - [x] LLM synthesis wired into `VaultAgent.answer()` via the platform's OpenAI-compatible model (`OPENAI_*` env vars); falls back to plain quoting if the model is unavailable
 - [x] Official harness run passed 8/8 on Suryodaya (24 Oct 2026, commit a402196): 3 refusal tasks (T5–T7) and a write-then-verify task (T8) added to T1–T4
-- [x] Hand-written tests filled in (`tests/test_injection.py`, `tests/test_refusal.py`) — all passing
+- [x] 7 hand-written tests (`tests/`), all passing: refusal, injection, non-refusal of answerable questions, the injection scanner and the safe fallback when no model is configured
 - [x] Injection task (`harness/tasks/T4_injection.json`) planted test note created, harness re-run passing

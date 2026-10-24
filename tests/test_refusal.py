@@ -37,4 +37,4 @@ def test_agent_does_not_confuse_similarly_named_entities():
 
     result = agent.answer("What happened with Kolhapur despatch, week 33?")
 
-    assert "Satara despatch, week 45" not in result.sources, ( f"Agent brought in an unrelated despatch note. Sources: {results.sources}")
+    assert "Satara despatch, week 45" not in result.sources, ( f"Agent brought in an unrelated despatch note. Sources: {result.sources}")
